@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Search, Bell, ChevronDown, LogOut, User, Shield, Menu } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -26,6 +26,24 @@ export function TopNavbar({ onSearchOpen, sidebarCollapsed, onToggle }: TopNavba
   const [showUser, setShowUser] = useState(false)
   const navigate = useNavigate()
   const unread = mockNotifications.filter(n => !n.read).length
+
+  const userMenuRef = useRef<HTMLDivElement>(null)
+  const notifMenuRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const handleOutsideClick = (event: MouseEvent) => {
+      if (showUser && userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+        setShowUser(false)
+      }
+      if (showNotif && notifMenuRef.current && !notifMenuRef.current.contains(event.target as Node)) {
+        setShowNotif(false)
+      }
+    }
+    document.addEventListener('mousedown', handleOutsideClick)
+    return () => {
+      document.removeEventListener('mousedown', handleOutsideClick)
+    }
+  }, [showUser, showNotif])
 
   return (
     <header
@@ -98,7 +116,7 @@ export function TopNavbar({ onSearchOpen, sidebarCollapsed, onToggle }: TopNavba
         */}
 
         {/* User menu */}
-        <div className="relative">
+        <div className="relative" ref={userMenuRef}>
           <button id="user-menu-btn" onClick={() => { setShowUser(v => !v); setShowNotif(false) }}
             className="flex items-center gap-2 px-2 py-1.5 rounded-xl border transition-colors hover:bg-[var(--bg-elevated)]"
             style={{ borderColor: 'var(--border-color)' }}>
