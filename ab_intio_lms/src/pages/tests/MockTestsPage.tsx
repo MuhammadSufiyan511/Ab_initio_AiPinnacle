@@ -99,15 +99,17 @@ export default function MockTestsPage() {
         )}
 
         {(filter !== 'All' && filter !== 'FPSC') && (
-          <MotionItem key="empty-state" className="col-span-full py-12 flex flex-col items-center justify-center text-center gap-3 card p-8 border-2 border-dashed" style={{ borderColor: 'var(--border-color)', background: 'var(--bg-surface)' }}>
-            <div className="w-12 h-12 rounded-2xl flex items-center justify-center bg-[var(--bg-elevated)] text-[var(--text-muted)]">
-              <FileText size={24} />
-            </div>
-            <div>
-              <h4 className="font-bold text-sm" style={{ color: 'var(--text-primary)' }}>No {filter} Examination Material Yet</h4>
-              <p className="text-xs max-w-xs mx-auto mt-1 leading-relaxed" style={{ color: 'var(--text-muted)' }}>
-                Official diagnostic study plans and mock examinations for {filter} commission are currently being compiled and will be available shortly.
-              </p>
+          <MotionItem key="empty-state">
+            <div className="col-span-full py-12 flex flex-col items-center justify-center text-center gap-3 card p-8 border-2 border-dashed" style={{ borderColor: 'var(--border-color)', background: 'var(--bg-surface)' }}>
+              <div className="w-12 h-12 rounded-2xl flex items-center justify-center bg-[var(--bg-elevated)] text-[var(--text-muted)]">
+                <FileText size={24} />
+              </div>
+              <div>
+                <h4 className="font-bold text-sm" style={{ color: 'var(--text-primary)' }}>No {filter} Examination Material Yet</h4>
+                <p className="text-xs max-w-xs mx-auto mt-1 leading-relaxed" style={{ color: 'var(--text-muted)' }}>
+                  Official diagnostic study plans and mock examinations for {filter} commission are currently being compiled and will be available shortly.
+                </p>
+              </div>
             </div>
           </MotionItem>
         )}
