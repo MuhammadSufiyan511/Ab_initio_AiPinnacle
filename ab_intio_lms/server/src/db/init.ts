@@ -1,15 +1,16 @@
-// ============================================================================
-// FPSC SYSTEM ANALYST (BS-18) - EXACT 200 UNIQUE QUESTION BANK
-// ============================================================================
+import { pool, systemPool } from './pool.js'
+import dotenv from 'dotenv'
 
-export type MCQQuestion = [string, string[], number, string]
+dotenv.config()
 
-// 50 English Questions
-export const rawEnglish: MCQQuestion[] = [
+const DB_NAME = process.env.DB_NAME || 'ab_initio_lms'
+
+// Complete 200 Question bank
+const englishQuestions = [
   ["Synonym for 'Eleemosynary':", ["Charitable", "Complicated", "Deceitful", "Ancient"], 0, "Relates to charity."],
   ["Error: 'Were he to understand the code, he would not have deleted it.'", ["Were he to", "understand the code", "would not have", "deleted it"], 2, "Mixed conditional. Should be 'would not delete it'."],
   ["Antonym for 'Lugubrious':", ["Mournful", "Cheerful", "Clumsy", "Heavy"], 1, "Lugubrious means sad; Cheerful is opposite."],
-  ["Idiom 'Sword of Damocles':", ["A weapon of great power", "An imminent, ever-present threat", "A victory that costs too much", "A decisive action"], 1, "An imminent, ever-present threat."],
+  ["Idiom 'Sword of Damocles':", ["A weapon of great power", "An imminent, ever-present threat", "A decisive action", "A victory that costs too much"], 1, "An imminent, ever-present threat."],
   ["Preposition: 'Impervious ___ modern optimizations.'", ["against", "to", "for", "from"], 1, "Impervious is followed by 'to'."],
   ["Subjunctive use:", ["I insist that the developer tests the module.", "I insist that the developer test the module.", "I insist that the developer will test the module.", "I insist the developer testing the module."], 1, "Subjunctive uses base form 'test'."],
   ["Complete: 'Not only ___ the database crash, but backups corrupted.'", ["did", "has", "had", "does"], 0, "Inversion required: 'Not only did...'"],
@@ -58,8 +59,7 @@ export const rawEnglish: MCQQuestion[] = [
   ["Correct spelling:", ["Privelege", "Privilege", "Priviledge", "Privelige"], 1, "Privilege has no D."]
 ]
 
-// 50 General Intelligence Questions
-export const rawGeneral: MCQQuestion[] = [
+const generalQuestions = [
   ["Remainder when 3^200 is divided by 7?", ["1", "2", "4", "5"], 1, "3^6 = 1 mod 7. 200 = 6*33 + 2. Remainder is same as 3^2 mod 7 = 2."],
   ["Clock gains 5 mins every hour. Set at 12:00 PM, true time when clock shows 6:30 PM?", ["5:30 PM", "5:45 PM", "6:00 PM", "6:15 PM"], 2, "390 broken mins = 360 real mins = 6:00 PM."],
   ["If log_x(16) = 4, x is?", ["2", "4", "8", "16"], 0, "x^4 = 16. The 4th root of 16 is 2."],
@@ -112,8 +112,7 @@ export const rawGeneral: MCQQuestion[] = [
   ["Average of first 5 prime numbers?", ["5.6", "3.6", "4.0", "5.0"], 0, "(2+3+5+7+11)/5 = 28/5 = 5.6."]
 ]
 
-// 100 Professional Questions (OS, Arch, OOP, SE, DSA, DBMS, Net)
-export const rawProfessional: MCQQuestion[] = [
+const professionalQuestions = [
   ["In Tomasulo's algorithm, what eliminates WAW and WAR hazards?", ["ROB", "Reservation Stations", "Branch Target Buffer", "TLB"], 1, "Reservation Stations hold operands and allow register renaming."],
   ["Which cache mapping scheme strictly uses a replacement algorithm?", ["Direct Mapped", "Fully Associative", "Write-Through", "Write-Back"], 1, "Direct mapped has only one possible block location. Associative needs LRU."],
   ["In OS, what is the 'Working Set'?", ["Total RAM", "Set of pages actively referenced", "Page table size", "Swap space"], 1, "Estimates memory required by a process to prevent thrashing."],
@@ -215,3 +214,320 @@ export const rawProfessional: MCQQuestion[] = [
   ["Usable hosts in a /28 CIDR block?", ["14", "16", "30", "32"], 0, "2^4 - 2 = 14."],
   ["Protocol using 'Distance Vector' routing?", ["OSPF", "RIP", "BGP", "IS-IS"], 1, "Routing Information Protocol (RIP)."]
 ]
+
+// Schema definitions
+const CREATE_TABLES = `
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+
+CREATE TABLE IF NOT EXISTS users (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name VARCHAR(255) NOT NULL,
+  email VARCHAR(255) UNIQUE NOT NULL,
+  password_hash VARCHAR(255) NOT NULL,
+  avatar TEXT,
+  bio TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Safely add columns if they don't exist
+ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar TEXT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS bio TEXT;
+
+CREATE TABLE IF NOT EXISTS exams (
+  id VARCHAR(255) PRIMARY KEY,
+  title VARCHAR(255) NOT NULL,
+  category VARCHAR(255) NOT NULL,
+  course VARCHAR(255) NOT NULL,
+  case_no VARCHAR(255),
+  duration INTEGER NOT NULL,
+  passing_score DOUBLE PRECISION DEFAULT 50.0,
+  logo_url VARCHAR(255),
+  negative_marking DOUBLE PRECISION DEFAULT 0.25
+);
+
+ALTER TABLE exams ADD COLUMN IF NOT EXISTS logo_url VARCHAR(255);
+ALTER TABLE exams ADD COLUMN IF NOT EXISTS negative_marking DOUBLE PRECISION DEFAULT 0.25;
+
+CREATE TABLE IF NOT EXISTS exam_sections (
+  id VARCHAR(255) PRIMARY KEY,
+  exam_id VARCHAR(255) REFERENCES exams(id) ON DELETE CASCADE,
+  name VARCHAR(255) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS questions (
+  id SERIAL PRIMARY KEY,
+  section_id VARCHAR(255) REFERENCES exam_sections(id) ON DELETE CASCADE,
+  question_text TEXT NOT NULL,
+  options TEXT[] NOT NULL,
+  correct_answer_index INTEGER NOT NULL,
+  explanation TEXT
+);
+
+CREATE TABLE IF NOT EXISTS user_exam_attempts (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+  exam_id VARCHAR(255) REFERENCES exams(id) ON DELETE CASCADE,
+  score DOUBLE PRECISION,
+  correct_answers INTEGER DEFAULT 0,
+  wrong_answers INTEGER DEFAULT 0,
+  skipped_answers INTEGER DEFAULT 0,
+  time_spent INTEGER DEFAULT 0,
+  remaining_time INTEGER,
+  is_completed BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  completed_at TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS attempt_answers (
+  attempt_id UUID REFERENCES user_exam_attempts(id) ON DELETE CASCADE,
+  question_id INTEGER REFERENCES questions(id) ON DELETE CASCADE,
+  selected_option_index INTEGER NOT NULL,
+  is_correct BOOLEAN NOT NULL,
+  PRIMARY KEY (attempt_id, question_id)
+);
+
+-- Indexes for performance
+CREATE INDEX IF NOT EXISTS idx_exam_sections_exam_id ON exam_sections(exam_id);
+CREATE INDEX IF NOT EXISTS idx_questions_section_id ON questions(section_id);
+CREATE INDEX IF NOT EXISTS idx_user_attempts_user_id ON user_exam_attempts(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_attempts_exam_id ON user_exam_attempts(exam_id);
+CREATE INDEX IF NOT EXISTS idx_attempt_answers_attempt_id ON attempt_answers(attempt_id);
+`
+
+export async function initDb(): Promise<void> {
+  console.log('Initializing database setup...')
+
+  try {
+    // 1. Check if database exists, create if not
+    const dbCheck = await systemPool.query('SELECT 1 FROM pg_database WHERE datname = $1', [DB_NAME])
+    if (dbCheck.rowCount === 0) {
+      console.log(`Database '${DB_NAME}' does not exist. Creating...`)
+      await systemPool.query(`CREATE DATABASE ${DB_NAME}`)
+      console.log(`Database '${DB_NAME}' created successfully.`)
+    }
+
+    // 2. Create tables
+    console.log('Creating tables...')
+    await pool.query(CREATE_TABLES)
+
+    // 2b. Repair legacy schema mismatch where user_exam_attempts.user_id was INTEGER
+    const fkTypeCheck = await pool.query(`
+      SELECT
+        (SELECT data_type FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'id') AS users_id_type,
+        (SELECT data_type FROM information_schema.columns WHERE table_name = 'user_exam_attempts' AND column_name = 'user_id') AS attempts_user_id_type
+    `)
+    const usersIdType = fkTypeCheck.rows[0]?.users_id_type
+    const attemptsUserIdType = fkTypeCheck.rows[0]?.attempts_user_id_type
+
+    if (usersIdType && attemptsUserIdType && usersIdType !== attemptsUserIdType) {
+      console.warn(
+        `Schema mismatch detected: users.id=${usersIdType}, user_exam_attempts.user_id=${attemptsUserIdType}. Rebuilding attempt tables...`
+      )
+
+      await pool.query(`
+        DROP TABLE IF EXISTS attempt_answers;
+        DROP TABLE IF EXISTS user_exam_attempts;
+
+        CREATE TABLE user_exam_attempts (
+          id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+          user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+          exam_id VARCHAR(255) REFERENCES exams(id) ON DELETE CASCADE,
+          score DOUBLE PRECISION,
+          correct_answers INTEGER DEFAULT 0,
+          wrong_answers INTEGER DEFAULT 0,
+          skipped_answers INTEGER DEFAULT 0,
+          time_spent INTEGER DEFAULT 0,
+          remaining_time INTEGER,
+          is_completed BOOLEAN DEFAULT FALSE,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          completed_at TIMESTAMP
+        );
+
+        CREATE TABLE attempt_answers (
+          attempt_id UUID REFERENCES user_exam_attempts(id) ON DELETE CASCADE,
+          question_id INTEGER REFERENCES questions(id) ON DELETE CASCADE,
+          selected_option_index INTEGER NOT NULL,
+          is_correct BOOLEAN NOT NULL,
+          PRIMARY KEY (attempt_id, question_id)
+        );
+      `)
+    }
+
+    console.log('Tables verified/created successfully. Seeding initial data...')
+
+    // 3. Seed active mock exams
+    const examsToSeed = [
+      {
+        id: 'fpsc-system-analyst',
+        title: 'System Analyst Proctored Simulation',
+        category: 'FPSC',
+        course: 'System Analyst (BS-18)',
+        case_no: 'Case No. F.4-74/2026-R',
+        duration: 12000,
+        passing_score: 40.0,
+        logo_url: 'fpsc',
+        negative_marking: 0.25,
+        sections: [
+          { id: 'part-i', name: 'Part I - English (Grammar & Vocabulary)' },
+          { id: 'part-ii-gi', name: 'Part II - General Intelligence (Arithmetic & General Knowledge)' },
+          { id: 'part-iii-cs', name: 'Part III - Professional IT (Computer Science & SE)' }
+        ]
+      },
+      {
+        id: 'ppsc-it-officer',
+        title: 'PPSC IT Officer Proctored Simulation',
+        category: 'PPSC',
+        course: 'IT Officer (BS-17)',
+        case_no: 'Case No. 12-RG/2026',
+        duration: 5400,
+        passing_score: 50.0,
+        logo_url: 'ppsc',
+        negative_marking: 0.25,
+        sections: [
+          { id: 'ppsc-part-i', name: 'Part I - IT Core' },
+          { id: 'ppsc-part-ii', name: 'Part II - Pakistan Studies & GK' }
+        ],
+        questions: [
+          ["Which layer of the OSI model does a router operate on?", ["Physical", "Data Link", "Network", "Transport"], 2, "Routers operate at the Network layer (Layer 3).", 'ppsc-part-i'],
+          ["What is the main function of Address Resolution Protocol (ARP)?", ["Map IP to MAC address", "Map Domain to IP", "Establish secure connection", "Manage files"], 0, "ARP resolves IP addresses to physical MAC addresses.", 'ppsc-part-i'],
+          ["Who was the first Prime Minister of Pakistan?", ["Muhammad Ali Jinnah", "Liaquat Ali Khan", "Allama Iqbal", "Ayub Khan"], 1, "Liaquat Ali Khan was the first Prime Minister of Pakistan.", 'ppsc-part-ii'],
+          ["Which is the largest river of Pakistan?", ["Indus River", "Jhelum River", "Chenab River", "Ravi River"], 0, "Indus River is the longest and largest river of Pakistan.", 'ppsc-part-ii']
+        ]
+      },
+      {
+        id: 'spsc-software-engineer',
+        title: 'SPSC Software Engineer Simulation',
+        category: 'SPSC',
+        course: 'Software Engineer (BS-17)',
+        case_no: 'Case No. 04-SE/2026',
+        duration: 6000,
+        passing_score: 50.0,
+        logo_url: 'spsc',
+        negative_marking: 0.25,
+        sections: [
+          { id: 'spsc-part-i', name: 'Part I - Software Engineering' },
+          { id: 'spsc-part-ii', name: 'Part II - General Ability' }
+        ],
+        questions: [
+          ["What does the 'S' in SOLID principles stand for?", ["Single Responsibility", "Scope", "Security", "Scalability"], 0, "S stands for Single Responsibility Principle.", 'spsc-part-i'],
+          ["Which software development methodology focuses on quick iterations and agility?", ["Waterfall", "Agile", "Spiral", "V-Model"], 1, "Agile methodology emphasizes speed and iterative progress.", 'spsc-part-i'],
+          ["Which city is known as the 'City of Lights' in Pakistan?", ["Lahore", "Karachi", "Islamabad", "Peshawar"], 1, "Karachi is known as the City of Lights.", 'spsc-part-ii'],
+          ["Mohenjo-daro is located in which district of Sindh?", ["Larkana", "Sukkur", "Hyderabad", "Karachi"], 0, "Mohenjo-daro is located in the Larkana District of Sindh.", 'spsc-part-ii']
+        ]
+      },
+      {
+        id: 'bpsc-programmer',
+        title: 'BPSC Programmer Simulation',
+        category: 'BPSC',
+        course: 'Programmer (BS-17)',
+        case_no: 'Case No. 08-PR/2026',
+        duration: 7200,
+        passing_score: 45.0,
+        logo_url: 'bpsc',
+        negative_marking: 0.25,
+        sections: [
+          { id: 'bpsc-part-i', name: 'Part I - Programming & DBMS' },
+          { id: 'bpsc-part-ii', name: 'Part II - English & GK' }
+        ],
+        questions: [
+          ["What is the primary key in a database table?", ["A unique identifier for a row", "A foreign key link", "A nullable string", "A database index"], 0, "A primary key uniquely identifies each record in a database table.", 'bpsc-part-i'],
+          ["Which programming language is typically used for client-side web scripting?", ["Python", "Java", "JavaScript", "C++"], 2, "JavaScript is the standard language for browser/client-side scripting.", 'bpsc-part-i'],
+          ["Which is the largest province of Pakistan by land area?", ["Punjab", "Sindh", "Balochistan", "KPK"], 2, "Balochistan is the largest province of Pakistan by area.", 'bpsc-part-ii'],
+          ["What is the capital of Balochistan?", ["Quetta", "Gwadar", "Sibi", "Turbat"], 0, "Quetta is the provincial capital of Balochistan.", 'bpsc-part-ii']
+        ]
+      },
+      {
+        id: 'kppsc-network-admin',
+        title: 'KPPSC Network Admin Simulation',
+        category: 'KPPSC',
+        course: 'Network Administrator (BS-17)',
+        case_no: 'Case No. 02-NA/2026',
+        duration: 6000,
+        passing_score: 40.0,
+        logo_url: 'kppsc',
+        negative_marking: 0.25,
+        sections: [
+          { id: 'kppsc-part-i', name: 'Part I - Networking & Security' },
+          { id: 'kppsc-part-ii', name: 'Part II - General Intelligence' }
+        ],
+        questions: [
+          ["What port does HTTPS use by default?", ["80", "8080", "443", "22"], 2, "HTTPS uses port 443 by default.", 'kppsc-part-i'],
+          ["What does 'VPN' stand for in computer networking?", ["Virtual Private Network", "Variable Path Node", "Verified Public Network", "Virtual Public Network"], 0, "VPN stands for Virtual Private Network.", 'kppsc-part-i'],
+          ["Which mountain pass connects Peshawar with Afghanistan?", ["Bolan Pass", "Khyber Pass", "Khunjerab Pass", "Tochi Pass"], 1, "Khyber Pass connects Peshawar with Kabul, Afghanistan.", 'kppsc-part-ii'],
+          ["Where is the famous lake Saif-ul-Muluk located?", ["Swat Valley", "Naran Valley", "Kaghan Valley", "Gilgit"], 2, "Lake Saif-ul-Muluk is located in Kaghan Valley, KP.", 'kppsc-part-ii']
+        ]
+      }
+    ]
+
+    for (const exam of examsToSeed) {
+      const examCheck = await pool.query('SELECT 1 FROM exams WHERE id = $1', [exam.id])
+      if (examCheck.rowCount === 0) {
+        console.log(`Seeding exam: ${exam.title}`)
+        await pool.query(`
+          INSERT INTO exams (id, title, category, course, case_no, duration, passing_score, logo_url, negative_marking)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        `, [
+          exam.id,
+          exam.title,
+          exam.category,
+          exam.course,
+          exam.case_no,
+          exam.duration,
+          exam.passing_score,
+          exam.logo_url,
+          exam.negative_marking
+        ])
+
+        // Seed sections
+        for (const sec of exam.sections) {
+          await pool.query(`
+            INSERT INTO exam_sections (id, exam_id, name) VALUES ($1, $2, $3)
+          `, [sec.id, exam.id, sec.name])
+        }
+
+        // Seed questions if explicitly provided
+        if (exam.questions) {
+          for (const q of exam.questions) {
+            await pool.query(`
+              INSERT INTO questions (section_id, question_text, options, correct_answer_index, explanation)
+              VALUES ($1, $2, $3, $4, $5)
+            `, [q[4], q[0], q[1], q[2], q[3]])
+          }
+        } else if (exam.id === 'fpsc-system-analyst') {
+          // Seed FPSC 200 Questions
+          console.log('Seeding 200 question bank into questions table for FPSC System Analyst...')
+          for (const q of englishQuestions) {
+            await pool.query(`
+              INSERT INTO questions (section_id, question_text, options, correct_answer_index, explanation)
+              VALUES ('part-i', $1, $2, $3, $4)
+            `, [q[0], q[1], q[2], q[3]])
+          }
+          for (const q of generalQuestions) {
+            await pool.query(`
+              INSERT INTO questions (section_id, question_text, options, correct_answer_index, explanation)
+              VALUES ('part-ii-gi', $1, $2, $3, $4)
+            `, [q[0], q[1], q[2], q[3]])
+          }
+          for (const q of professionalQuestions) {
+            await pool.query(`
+              INSERT INTO questions (section_id, question_text, options, correct_answer_index, explanation)
+              VALUES ('part-iii-cs', $1, $2, $3, $4)
+            `, [q[0], q[1], q[2], q[3]])
+          }
+        }
+      } else {
+        // Update negative_marking and logo_url just in case
+        await pool.query(`
+          UPDATE exams 
+          SET logo_url = $1, negative_marking = $2
+          WHERE id = $3
+        `, [exam.logo_url, exam.negative_marking, exam.id])
+      }
+    }
+
+    console.log('Database initialization fully complete!')
+  } catch (err) {
+    console.error('Error during database initialization:', err)
+    throw err
+  }
+}

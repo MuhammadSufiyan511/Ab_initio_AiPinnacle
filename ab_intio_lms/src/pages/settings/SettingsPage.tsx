@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { User, Palette, Bell, Shield, Accessibility, Camera, Save } from 'lucide-react'
 import { MotionPage } from '@/animations/MotionWrapper'
 import { PageHeader } from '@/components/shared/PageHeader'
@@ -7,6 +7,7 @@ import { useThemeStore } from '@/store/themeStore'
 import { useUserStore } from '@/store/userStore'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
+import { useTranslation } from 'react-i18next'
 
 type Section = 'Profile & Account' | 'Appearance' | 'Notifications' | 'Privacy' | 'Accessibility'
 
@@ -46,14 +47,22 @@ function Row({ label, desc, children }: { label: string; desc?: string; children
  * Features an interactive profile image upload (Base64 conversion and Zustand sync).
  */
 export default function SettingsPage() {
-  const [active, setActive] = useState<Section>('Profile & Account')
+  const { t } = useTranslation()
   const { theme } = useThemeStore()
-  const { user, setUser } = useUserStore()
+  const { user, updateProfile } = useUserStore()
 
   // Local state for profile inputs
-  const [name, setName] = useState(user.name)
-  const [email, setEmail] = useState(user.email)
-  const [bio, setBio] = useState('Passionate learner & aspiring full-stack developer. Building the future one line at a time.')
+  const [name, setName] = useState(user?.name || '')
+  const [email, setEmail] = useState(user?.email || '')
+  const [bio, setBio] = useState(user?.bio || t('dashboard.settings.defaultBio'))
+
+  useEffect(() => {
+    if (user) {
+      setName(user.name)
+      setEmail(user.email)
+      if (user.bio) setBio(user.bio)
+    }
+  }, [user])
 
   // Options states
   const [notifs, setNotifs] = useState({ Assignments: true, Messages: true, Grades: true, System: false })
@@ -66,54 +75,54 @@ export default function SettingsPage() {
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
+      if (file.size > 100 * 1024) {
+        toast.error(t('dashboard.settings.errors.avatarTooLarge'))
+        return
+      }
       const reader = new FileReader()
-      reader.onloadend = () => {
-        setUser({ avatar: reader.result as string })
-        toast.success('Profile picture updated successfully!')
+      reader.onloadend = async () => {
+        const success = await updateProfile({ name, email, bio, avatar: reader.result as string })
+        if (success) {
+          toast.success(t('dashboard.settings.success.avatarUpdated'))
+        } else {
+          toast.error(t('dashboard.settings.errors.avatarUpdateFailed'))
+        }
       }
       reader.readAsDataURL(file)
     }
   }
 
-  const handleSaveChanges = () => {
-    setUser({ name, email })
-    toast.success('Settings and Profile updated!')
+  const handleSaveChanges = async () => {
+    const success = await updateProfile({ name, email, bio, avatar: user?.avatar })
+    if (success) {
+      toast.success(t('dashboard.settings.success.settingsUpdated'))
+    } else {
+      toast.error(t('dashboard.settings.errors.settingsUpdateFailed'))
+    }
   }
 
   return (
     <MotionPage className="flex flex-col gap-6 max-w-full">
-      <PageHeader title="Settings" subtitle="Manage your account profile, preferences, and system settings" />
-      
-      <div className="flex flex-col lg:flex-row gap-8 items-start">
-        {/* Navigation Sidebar */}
-        <div className="flex flex-row lg:flex-col gap-1 w-full lg:w-60 overflow-x-auto shrink-0 pb-2 lg:pb-0">
-          {SECTIONS.map(s => (
-            <button key={s.key} id={`settings-${s.key.toLowerCase().replace(/ & /g, '-')}`} onClick={() => setActive(s.key)}
-              className={cn('flex items-center gap-2.5 px-4 py-3 rounded-xl text-sm font-semibold transition-all whitespace-nowrap flex-shrink-0 lg:w-full text-left')}
-              style={active === s.key ? { background: 'var(--color-primary)', color: '#fff' } : { color: 'var(--text-secondary)' }}>
-              {s.icon}{s.key}
-            </button>
-          ))}
-        </div>
+      <PageHeader title={t('dashboard.settings.title')} subtitle={t('dashboard.settings.subtitle')} />
 
+      <div className="flex flex-col gap-8 items-start w-full">
         {/* Dynamic Panel Content */}
-        <div className="flex-1 w-full card p-6 lg:p-8">
-          {active === 'Profile & Account' && (
+        <div className="w-full card p-6 lg:p-8">
             <div className="flex flex-col gap-6">
               <div>
-                <h3 className="font-bold text-lg mb-1" style={{ color: 'var(--text-primary)' }}>Profile & Account Settings</h3>
-                <p className="text-xs" style={{ color: 'var(--text-muted)' }}>Customize how your profile appears to instructors and peers</p>
+                <h3 className="font-bold text-lg mb-1" style={{ color: 'var(--text-primary)' }}>{t('dashboard.settings.profileTitle')}</h3>
+                <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{t('dashboard.settings.profileSubtitle')}</p>
               </div>
 
               {/* Avatar Uploader Block */}
               <div className="flex flex-col sm:flex-row items-center gap-6 pb-6 border-b" style={{ borderColor: 'var(--border-color)' }}>
-                <div className="relative group cursor-pointer" onClick={() => fileInputRef.current?.click()}>
-                  <div className="w-24 h-24 rounded-full overflow-hidden border-2 flex items-center justify-center bg-[var(--bg-elevated)]" style={{ borderColor: 'var(--border-color)' }}>
-                    {user.avatar ? (
-                      <img src={user.avatar} alt="Avatar" className="w-full h-full object-cover" />
-                    ) : (
+	                <div className="relative group cursor-pointer" onClick={() => fileInputRef.current?.click()}>
+	                  <div className="w-24 h-24 rounded-full overflow-hidden border-2 flex items-center justify-center bg-[var(--bg-elevated)]" style={{ borderColor: 'var(--border-color)' }}>
+	                    {user?.avatar ? (
+	                      <img src={user.avatar} alt={t('dashboard.settings.alt.avatar')} className="w-full h-full object-cover" />
+	                    ) : (
                       <span className="text-3xl font-black" style={{ color: 'var(--text-muted)' }}>
-                        {name.charAt(0).toUpperCase()}
+                        {(name || 'S').charAt(0).toUpperCase()}
                       </span>
                     )}
                   </div>
@@ -122,26 +131,26 @@ export default function SettingsPage() {
                   </div>
                   <input type="file" ref={fileInputRef} onChange={handleImageUpload} accept="image/*" className="hidden" />
                 </div>
-                <div className="text-center sm:text-left">
-                  <h4 className="font-bold text-sm" style={{ color: 'var(--text-primary)' }}>Profile Picture</h4>
-                  <p className="text-xs mt-1 mb-3" style={{ color: 'var(--text-muted)' }}>JPG, PNG or GIF. Max size 2MB.</p>
-                  <button onClick={() => fileInputRef.current?.click()} className="px-3.5 py-1.5 rounded-lg border text-xs font-semibold hover:bg-[var(--bg-elevated)] transition-colors" style={{ borderColor: 'var(--border-color)', color: 'var(--text-secondary)' }}>
-                    Choose Photo
-                  </button>
-                </div>
-              </div>
+	                <div className="text-center sm:text-left">
+	                  <h4 className="font-bold text-sm" style={{ color: 'var(--text-primary)' }}>{t('dashboard.settings.profilePicture')}</h4>
+	                  <p className="text-xs mt-1 mb-3" style={{ color: 'var(--text-muted)' }}>{t('dashboard.settings.profilePictureHint')}</p>
+	                  <button onClick={() => fileInputRef.current?.click()} className="px-3.5 py-1.5 rounded-lg border text-xs font-semibold hover:bg-[var(--bg-elevated)] transition-colors" style={{ borderColor: 'var(--border-color)', color: 'var(--text-secondary)' }}>
+	                    {t('dashboard.settings.choosePhoto')}
+	                  </button>
+	                </div>
+	              </div>
 
               {/* Field Rows */}
               <div className="flex flex-col gap-4">
-                <Row label="Full Name" desc="Your public display name">
+                <Row label={t('dashboard.settings.fullName')} desc={t('dashboard.settings.fullNameDesc')}>
                   <input value={name} onChange={e => setName(e.target.value)} className="px-3 py-2 rounded-lg border text-sm outline-none w-full sm:w-80"
                     style={{ background: 'var(--input-bg)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }} />
                 </Row>
-                <Row label="Email Address" desc="Used for system notifications and login verification">
+                <Row label={t('dashboard.settings.email')} desc={t('dashboard.settings.emailDesc')}>
                   <input value={email} onChange={e => setEmail(e.target.value)} className="px-3 py-2 rounded-lg border text-sm outline-none w-full sm:w-80"
                     style={{ background: 'var(--input-bg)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }} />
                 </Row>
-                <Row label="Bio" desc="A short description about yourself">
+                <Row label={t('dashboard.settings.bio')} desc={t('dashboard.settings.bioDesc')}>
                   <textarea value={bio} onChange={e => setBio(e.target.value)} rows={3} className="px-3 py-2 rounded-lg border text-sm outline-none w-full sm:w-80 resize-none"
                     style={{ background: 'var(--input-bg)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }} />
                 </Row>
@@ -149,11 +158,10 @@ export default function SettingsPage() {
 
               <div className="pt-4">
                 <button onClick={handleSaveChanges} className="flex items-center gap-2 px-5 py-2.5 rounded-xl gradient-brand text-white text-sm font-semibold hover:shadow-lg transition-all hover:-translate-y-0.5">
-                  <Save size={16} /> Save Changes
+                  <Save size={16} /> {t('dashboard.settings.saveChanges')}
                 </button>
               </div>
             </div>
-          )}
 
           {/* 
           {active === 'Appearance' && (

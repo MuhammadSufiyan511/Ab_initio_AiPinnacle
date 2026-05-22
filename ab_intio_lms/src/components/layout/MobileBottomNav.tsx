@@ -13,7 +13,7 @@ const MOBILE_NAV = [
 export function MobileBottomNav() {
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 z-40 flex md:hidden"
+      className="fixed bottom-0 left-0 right-0 z-40 flex lg:hidden"
       style={{ background: 'var(--sidebar-bg)', borderTop: '1px solid var(--border-color)', paddingBottom: 'env(safe-area-inset-bottom)' }}
     >
       {MOBILE_NAV.map(({ label, icon: Icon, href }) => (

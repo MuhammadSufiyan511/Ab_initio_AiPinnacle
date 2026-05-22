@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Camera, Edit2, Save, X } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { MotionPage } from '@/animations/MotionWrapper'
@@ -23,12 +23,25 @@ const ACHIEVEMENTS = [
 ]
 
 export default function ProfilePage() {
-  const { user, setUser } = useUserStore()
+  const { user, setUser, updateProfile } = useUserStore()
   const [editing, setEditing] = useState(false)
-  const [name, setName] = useState(user.name)
+  const [name, setName] = useState(user?.name || '')
   const [bio, setBio] = useState('Passionate learner & aspiring full-stack developer. Building the future one line at a time.')
 
-  const save = () => { setUser({ name }); setEditing(false); toast.success('Profile updated!') }
+  useEffect(() => {
+    if (user) {
+      setName(user.name)
+    }
+  }, [user])
+
+  const save = () => {
+    if (user) {
+      setUser({ ...user, name })
+      updateProfile({ name })
+    }
+    setEditing(false)
+    toast.success('Profile updated!')
+  }
 
   return (
     <MotionPage className="max-w-3xl mx-auto flex flex-col gap-6">
@@ -45,7 +58,7 @@ export default function ProfilePage() {
       {/* Profile card */}
       <div className="card p-6 flex flex-col sm:flex-row items-start gap-5">
         <div className="relative flex-shrink-0">
-          <Avatar name={user.name} src={user.avatar} size="xl" />
+          <Avatar name={user?.name || ''} src={user?.avatar || ''} size="xl" />
           <button className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full gradient-brand flex items-center justify-center border-2 border-[var(--card-bg)]">
             <Camera size={12} className="text-white" />
           </button>
@@ -53,10 +66,10 @@ export default function ProfilePage() {
         <div className="flex-1 flex flex-col gap-2 min-w-0">
           {editing
             ? <input value={name} onChange={e => setName(e.target.value)} className="text-xl font-bold border-b-2 bg-transparent outline-none pb-1" style={{ borderColor: 'var(--color-primary)', color: 'var(--text-primary)' }} />
-            : <h2 className="text-xl font-bold" style={{ color: 'var(--text-primary)' }}>{user.name}</h2>
+            : <h2 className="text-xl font-bold" style={{ color: 'var(--text-primary)' }}>{user?.name || ''}</h2>
           }
-          <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>{user.email}</p>
-          <Badge variant="default" className="w-fit capitalize">{user.role}</Badge>
+          <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>{user?.email || ''}</p>
+          <Badge variant="default" className="w-fit capitalize">{user?.role || 'student'}</Badge>
           {editing
             ? <textarea value={bio} onChange={e => setBio(e.target.value)} rows={2} className="text-sm bg-transparent border rounded-lg p-2 resize-none outline-none mt-1" style={{ borderColor: 'var(--border-color)', color: 'var(--text-secondary)' }} />
             : <p className="text-sm leading-relaxed" style={{ color: 'var(--text-secondary)' }}>{bio}</p>

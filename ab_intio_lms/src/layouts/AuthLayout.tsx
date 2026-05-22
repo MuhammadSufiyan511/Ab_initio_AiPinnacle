@@ -1,8 +1,12 @@
 import { Outlet } from 'react-router-dom'
 import { GraduationCap } from 'lucide-react'
 import { ThemeToggle } from '@/components/shared/ThemeToggle'
+import { LanguageToggle } from '@/components/shared/LanguageToggle'
+import { Toaster } from 'sonner'
+import { useTranslation } from 'react-i18next'
 
 export function AuthLayout() {
+  const { t } = useTranslation()
   return (
     <div className="min-h-screen flex" style={{ background: 'var(--bg-base)' }}>
       {/* Left — Illustrated panel */}
@@ -23,38 +27,50 @@ export function AuthLayout() {
           <div className="w-10 h-10 rounded-xl gradient-brand flex items-center justify-center">
             <GraduationCap size={20} className="text-white" />
           </div>
-          <span className="text-white font-bold text-xl">Ab Initio LMS</span>
+          <span className="text-white font-bold text-xl">{t('common.appName')}</span>
         </div>
 
         {/* Center content */}
         <div className="relative z-10">
           <h2 className="text-4xl font-bold text-white leading-tight mb-4">
-            Learn without<br />
-            <span className="gradient-text">limits.</span>
+            {t('auth.panel.heading1')}<br />
+            <span className="gradient-text">{t('auth.panel.heading2')}</span>
           </h2>
           <p className="text-[#94a3b8] text-lg leading-relaxed max-w-sm">
-            Join thousands of learners on a next-generation platform built for the modern world.
+            {t('auth.panel.description')}
           </p>
 
-          {/* Stats */}
-          <div className="mt-8 flex gap-8">
-            {[{ label: 'Learners', value: '48K+' }, { label: 'Courses', value: '1,200+' }, { label: 'Instructors', value: '340+' }].map(s => (
-              <div key={s.label}>
-                <p className="text-2xl font-bold text-white">{s.value}</p>
-                <p className="text-xs text-[#64748b] mt-0.5">{s.label}</p>
+          {/* Onboarding Steps for Signup */}
+          <div className="mt-10 flex flex-col gap-6">
+            {[
+              { step: 1, title: t('auth.panel.step1'), desc: t('auth.panel.step1d') },
+              { step: 2, title: t('auth.panel.step2'), desc: t('auth.panel.step2d') },
+              { step: 3, title: t('auth.panel.step3'), desc: t('auth.panel.step3d') },
+            ].map(item => (
+              <div key={item.step} className="flex items-start gap-4">
+                <div className="w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs bg-white/10 text-white shrink-0 border border-white/20">
+                  {item.step}
+                </div>
+                <div>
+                  <h4 className="text-sm font-bold text-white">{item.title}</h4>
+                  <p className="text-xs text-[#94a3b8] mt-0.5">{item.desc}</p>
+                </div>
               </div>
             ))}
           </div>
+
         </div>
 
         {/* Testimonial */}
         <div className="relative z-10 glass rounded-2xl p-5">
-          <p className="text-sm italic leading-relaxed" style={{ color: 'var(--text-secondary)' }}>"Ab Initio transformed how I learn. The experience is unmatched."</p>
+          <p className="text-sm italic leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+            "Preparing for the FPSC exam was incredibly stressful until I used this portal. The proctored simulators, negative marking rules, and instant section-wise analytics gave me the exact practice I needed to clear the exam with confidence."
+          </p>
           <div className="flex items-center gap-3 mt-3">
-            <div className="w-8 h-8 rounded-full gradient-brand flex items-center justify-center text-xs text-white font-bold">MK</div>
+            <div className="w-8 h-8 rounded-full gradient-brand flex items-center justify-center text-xs text-white font-bold">MA</div>
             <div>
-              <p className="text-xs font-semibold" style={{ color: 'var(--text-primary)' }}>Maria K.</p>
-              <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>Senior Developer</p>
+              <p className="text-xs font-semibold" style={{ color: 'var(--text-primary)' }}>Muhammad A.</p>
+              <p className="text-[10px]" style={{ color: 'var(--text-muted)' }}>Assistant Director (FPSC Candidate)</p>
             </div>
           </div>
         </div>
@@ -67,19 +83,26 @@ export function AuthLayout() {
             <div className="w-8 h-8 rounded-xl gradient-brand flex items-center justify-center">
               <GraduationCap size={16} className="text-white" />
             </div>
-            <span className="font-bold" style={{ color: 'var(--text-primary)' }}>Ab Initio LMS</span>
+            <span className="font-bold" style={{ color: 'var(--text-primary)' }}>{t('common.appName')}</span>
           </div>
-          <ThemeToggle />
+          <div className="flex items-center gap-2">
+            <LanguageToggle />
+            <ThemeToggle />
+          </div>
         </div>
         <div className="flex-1 flex items-center justify-center px-6 py-8">
           <div className="w-full max-w-md">
-            <div className="absolute top-4 right-4 hidden lg:block">
-              <ThemeToggle />
+            <div className="absolute top-4 right-4 rtl:right-auto rtl:left-4 hidden lg:block">
+              <div className="flex items-center gap-2">
+                <LanguageToggle />
+                <ThemeToggle />
+              </div>
             </div>
             <Outlet />
           </div>
         </div>
       </div>
+      <Toaster position="bottom-right" richColors />
     </div>
   )
 }

@@ -24,7 +24,7 @@ export function AIAssistantWidget() {
   const [open, setOpen] = useState(false)
   const [input, setInput] = useState('')
   const [messages, setMessages] = useState<ChatMsg[]>([
-    { id: 0, from: 'ai', text: 'Hi! I\'m your Ab Initio AI assistant 👋 How can I help you learn today?' }
+    { id: 0, from: 'ai', text: 'Hi! I\'m your PrepPro AI assistant 👋 How can I help you learn today?' }
   ])
   const [typing, setTyping] = useState(false)
   const bottomRef = useRef<HTMLDivElement>(null)

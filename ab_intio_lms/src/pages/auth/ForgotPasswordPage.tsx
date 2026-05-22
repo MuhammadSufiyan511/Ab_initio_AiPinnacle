@@ -1,10 +1,13 @@
+import * as React from 'react'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Mail, ArrowRight, CheckCircle2 } from 'lucide-react'
 import { fadeInUp } from '@/animations/variants'
+import { useTranslation } from 'react-i18next'
 
 export default function ForgotPasswordPage() {
+  const { t } = useTranslation()
   const [email, setEmail]   = useState('')
   const [sent, setSent]     = useState(false)
   const [loading, setLoading] = useState(false)
@@ -21,13 +24,13 @@ export default function ForgotPasswordPage() {
         {!sent ? (
           <motion.div key="form" variants={fadeInUp} initial="hidden" animate="visible" className="flex flex-col gap-6">
             <div>
-              <h1 className="text-3xl font-bold mb-1" style={{ color: 'var(--text-primary)' }}>Reset password</h1>
-              <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>Enter your email and we'll send a reset link instantly.</p>
+              <h1 className="text-3xl font-bold mb-1" style={{ color: 'var(--text-primary)' }}>{t('auth.forgot.title')}</h1>
+              <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>{t('auth.forgot.subtitle')}</p>
             </div>
 
             <form onSubmit={handleSubmit} className="flex flex-col gap-4">
               <div className="flex flex-col gap-1.5">
-                <label htmlFor="forgot-email" className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>Email address</label>
+                <label htmlFor="forgot-email" className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>{t('auth.login.email')}</label>
                 <div className="relative">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2" style={{ color: 'var(--text-muted)' }}><Mail size={15} /></span>
                   <input id="forgot-email" type="email" required value={email} onChange={e => setEmail(e.target.value)}
@@ -41,13 +44,13 @@ export default function ForgotPasswordPage() {
                 className="flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold text-white gradient-brand hover:opacity-90 disabled:opacity-60">
                 {loading
                   ? <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  : <><span>Send Reset Link</span><ArrowRight size={15} /></>
+                  : <><span>{t('auth.forgot.submit')}</span><ArrowRight size={15} /></>
                 }
               </button>
             </form>
 
             <p className="text-center text-sm" style={{ color: 'var(--text-secondary)' }}>
-              Remember it? <Link to="/login" className="font-semibold hover:underline" style={{ color: 'var(--color-primary)' }}>Back to sign in</Link>
+              <Link to="/login" className="font-semibold hover:underline" style={{ color: 'var(--color-primary)' }}>{t('auth.forgot.back')}</Link>
             </p>
           </motion.div>
         ) : (
@@ -57,13 +60,13 @@ export default function ForgotPasswordPage() {
               <CheckCircle2 size={36} style={{ color: 'var(--color-success)' }} />
             </div>
             <div>
-              <h2 className="text-2xl font-bold mb-2" style={{ color: 'var(--text-primary)' }}>Check your inbox</h2>
+              <h2 className="text-2xl font-bold mb-2" style={{ color: 'var(--text-primary)' }}>{t('auth.forgot.inbox')}</h2>
               <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
                 We sent a password reset link to <strong>{email}</strong>. It expires in 15 minutes.
               </p>
             </div>
             <Link to="/login" className="text-sm font-semibold hover:underline" style={{ color: 'var(--color-primary)' }}>
-              ← Back to sign in
+              {t('auth.forgot.back')}
             </Link>
           </motion.div>
         )}
