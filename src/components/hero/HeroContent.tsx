@@ -46,7 +46,8 @@ function HeroContentComponent({
           style={{ fontFamily: '"Poppins", system-ui, sans-serif', color: 'var(--text-primary)' }}
         >
           {title1}
-          <span className="block bg-gradient-to-r from-blue-400 via-blue-600 to-amber-500 bg-clip-text text-transparent">
+          <br />
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-600 to-violet-500">
             {title2}
           </span>
         </motion.h1>

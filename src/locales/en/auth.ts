@@ -16,8 +16,17 @@ const enAuth = {
     continue: 'Continue', createAccount: 'Create Account', already: 'Already have an account?', signIn: 'Sign in'
   },
   forgot: {
-    title: 'Reset password', subtitle: "Enter your email and we'll send a reset link instantly.",
-    submit: 'Send Reset Link', inbox: 'Check your inbox', back: 'Back to sign in'
+    title: 'Reset password', subtitle: "Enter your email and we'll send a secure OTP.",
+    submit: 'Send OTP', inbox: 'Check your inbox', back: 'Back to sign in',
+    otpTitle: 'Enter OTP & New Password',
+    otpSent: "We sent a 6-digit code to",
+    otpLabel: '6-Digit OTP',
+    newPassword: 'New Password',
+    confirmPassword: 'Confirm New Password',
+    resetButton: 'Reset Password',
+    differentEmail: 'Use a different email',
+    successTitle: 'Password Reset Complete',
+    successMessage: 'Your password has been updated successfully. You can now sign in with your new password.'
   },
   panel: {
     heading1: 'Learn without', heading2: 'limits.',

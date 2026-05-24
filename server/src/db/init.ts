@@ -238,6 +238,17 @@ CREATE TABLE IF NOT EXISTS users (
 ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar TEXT;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS bio TEXT;
 
+CREATE TABLE IF NOT EXISTS password_resets (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  email VARCHAR(255) NOT NULL,
+  otp VARCHAR(6) NOT NULL,
+  expires_at TIMESTAMP NOT NULL,
+  used BOOLEAN DEFAULT FALSE,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_password_resets_email ON password_resets(email);
+
 CREATE TABLE IF NOT EXISTS exams (
   id VARCHAR(255) PRIMARY KEY,
   title VARCHAR(255) NOT NULL,
@@ -461,7 +472,326 @@ export async function initDb(): Promise<void> {
           ["Which mountain pass connects Peshawar with Afghanistan?", ["Bolan Pass", "Khyber Pass", "Khunjerab Pass", "Tochi Pass"], 1, "Khyber Pass connects Peshawar with Kabul, Afghanistan.", 'kppsc-part-ii'],
           ["Where is the famous lake Saif-ul-Muluk located?", ["Swat Valley", "Naran Valley", "Kaghan Valley", "Gilgit"], 2, "Lake Saif-ul-Muluk is located in Kaghan Valley, KP.", 'kppsc-part-ii']
         ]
+      },
+      // === TEMPORARY SERVICE COMMISSION EXAMS (15 MORE) - START ===
+      // These are placeholder/temporary exams for testing.
+      // DELETE THIS ENTIRE BLOCK (the TEMP comment down to the matching END comment) with one prompt when no longer needed.
+      {
+        id: 'fpsc-assistant-director',
+        title: 'FPSC Assistant Director Proctored Test',
+        category: 'FPSC',
+        course: 'Assistant Director (BS-17)',
+        case_no: 'Case No. F.4-12/2026-R',
+        duration: 7200,
+        passing_score: 45.0,
+        logo_url: 'fpsc',
+        negative_marking: 0.25,
+        sections: [
+          { id: 'fpsc-ad-p1', name: 'Part I - English & Precis Writing' },
+          { id: 'fpsc-ad-p2', name: 'Part II - General Knowledge & Current Affairs' }
+        ],
+        questions: [
+          ["Synonym of 'Ephemeral' is?", ["Permanent", "Short-lived", "Ancient", "Eternal"], 1, "Ephemeral means lasting for a very short time.", 'fpsc-ad-p1'],
+          ["The largest desert in Pakistan is?", ["Thar", "Cholistan", "Kharan", "Thal"], 0, "Thar Desert is the largest in Pakistan.", 'fpsc-ad-p2'],
+          ["Who presented the Lahore Resolution 1940?", ["Quaid-e-Azam", "Allama Iqbal", "Liaquat Ali Khan", "Sir Syed Ahmed Khan"], 0, "Quaid-e-Azam presided over the session.", 'fpsc-ad-p2'],
+          ["What is the capital of Gilgit-Baltistan?", ["Gilgit", "Skardu", "Hunza", "Gahkuch"], 0, "Gilgit is the capital of Gilgit-Baltistan.", 'fpsc-ad-p2']
+        ]
+      },
+      {
+        id: 'fpsc-lecturer-cs',
+        title: 'FPSC Lecturer Computer Science Test',
+        category: 'FPSC',
+        course: 'Lecturer (BS-17)',
+        case_no: 'Case No. F.4-55/2026-R',
+        duration: 6000,
+        passing_score: 50.0,
+        logo_url: 'fpsc',
+        negative_marking: 0.25,
+        sections: [
+          { id: 'fpsc-lec-p1', name: 'Part I - Computer Science Core' },
+          { id: 'fpsc-lec-p2', name: 'Part II - General Ability' }
+        ],
+        questions: [
+          ["Which data structure uses LIFO?", ["Queue", "Stack", "Tree", "Graph"], 1, "Stack follows Last In First Out.", 'fpsc-lec-p1'],
+          ["Time complexity of binary search is?", ["O(n)", "O(log n)", "O(n^2)", "O(1)"], 1, "Binary search is O(log n).", 'fpsc-lec-p1'],
+          ["Largest province of Pakistan by population?", ["Sindh", "Punjab", "KPK", "Balochistan"], 1, "Punjab has the highest population.", 'fpsc-lec-p2'],
+          ["Who wrote 'Pakistan: A Personal History'?", ["Imran Khan", "Benazir Bhutto", "Pervez Musharraf", "Asif Zardari"], 0, "Written by Imran Khan.", 'fpsc-lec-p2']
+        ]
+      },
+      {
+        id: 'fpsc-deputy-director',
+        title: 'FPSC Deputy Director Investigation Test',
+        category: 'FPSC',
+        course: 'Deputy Director (BS-18)',
+        case_no: 'Case No. F.4-88/2026-R',
+        duration: 7200,
+        passing_score: 40.0,
+        logo_url: 'fpsc',
+        negative_marking: 0.25,
+        sections: [
+          { id: 'fpsc-dd-p1', name: 'Part I - Law & Constitution' },
+          { id: 'fpsc-dd-p2', name: 'Part II - Intelligence & Investigation' }
+        ],
+        questions: [
+          ["Article 1 of Constitution declares Pakistan as?", ["Republic", "Federation", "Islamic Republic", "Democratic State"], 2, "Pakistan is an Islamic Republic.", 'fpsc-dd-p1'],
+          ["FIA stands for?", ["Federal Investigation Agency", "Federal Intelligence Agency", "Federal Internal Affairs", "Federal Investigation Authority"], 0, "Federal Investigation Agency.", 'fpsc-dd-p1'],
+          ["Who appoints the Chief Justice of Pakistan?", ["Prime Minister", "President", "Parliament", "Supreme Court"], 1, "The President appoints the CJP.", 'fpsc-dd-p2'],
+          ["The 1973 Constitution was enforced on?", ["14 August 1973", "12 April 1973", "23 March 1973", "25 December 1973"], 2, "Enforced on 14 August 1973.", 'fpsc-dd-p2']
+        ]
+      },
+      {
+        id: 'ppsc-assistant-director',
+        title: 'PPSC Assistant Director Test',
+        category: 'PPSC',
+        course: 'Assistant Director (BS-17)',
+        case_no: 'Case No. 45-RG/2026',
+        duration: 5400,
+        passing_score: 45.0,
+        logo_url: 'ppsc',
+        negative_marking: 0.25,
+        sections: [
+          { id: 'ppsc-ad-p1', name: 'Part I - English & Communication' },
+          { id: 'ppsc-ad-p2', name: 'Part II - Punjab Affairs & GK' }
+        ],
+        questions: [
+          ["Antonym of 'Benevolent'?", ["Kind", "Cruel", "Generous", "Helpful"], 1, "Benevolent means kind; antonym is cruel.", 'ppsc-ad-p1'],
+          ["Capital of Punjab Province?", ["Lahore", "Multan", "Faisalabad", "Rawalpindi"], 0, "Lahore is the capital of Punjab.", 'ppsc-ad-p2'],
+          ["Who is the founder of Pakistan?", ["Allama Iqbal", "Quaid-e-Azam", "Fatima Jinnah", "Liaquat Ali Khan"], 1, "Quaid-e-Azam Muhammad Ali Jinnah.", 'ppsc-ad-p2'],
+          ["Sutlej River originates from?", ["Tibet", "Kashmir", "Himachal", "Afghanistan"], 0, "Originates from Tibet.", 'ppsc-ad-p2']
+        ]
+      },
+      {
+        id: 'ppsc-lecturer-it',
+        title: 'PPSC Lecturer Information Technology',
+        category: 'PPSC',
+        course: 'Lecturer IT (BS-17)',
+        case_no: 'Case No. 67-L/2026',
+        duration: 6000,
+        passing_score: 50.0,
+        logo_url: 'ppsc',
+        negative_marking: 0.25,
+        sections: [
+          { id: 'ppsc-lit-p1', name: 'Part I - Information Technology' },
+          { id: 'ppsc-lit-p2', name: 'Part II - General Knowledge' }
+        ],
+        questions: [
+          ["What does DBMS stand for?", ["Data Base Management System", "Digital Base Management", "Data Backup Management System", "Dynamic Base Management"], 0, "Database Management System.", 'ppsc-lit-p1'],
+          ["Which is not a programming language?", ["Python", "HTML", "Java", "C++"], 1, "HTML is a markup language.", 'ppsc-lit-p1'],
+          ["Largest city of Punjab by area?", ["Lahore", "Faisalabad", "Multan", "Bahawalpur"], 0, "Lahore is the largest city.", 'ppsc-lit-p2'],
+          ["Which pass connects Pakistan with China?", ["Khyber Pass", "Khunjerab Pass", "Bolan Pass", "Tochi Pass"], 1, "Khunjerab Pass is the border with China.", 'ppsc-lit-p2']
+        ]
+      },
+      {
+        id: 'ppsc-excise-inspector',
+        title: 'PPSC Excise & Taxation Inspector Test',
+        category: 'PPSC',
+        course: 'Excise Inspector (BS-16)',
+        case_no: 'Case No. 21-ET/2026',
+        duration: 5400,
+        passing_score: 40.0,
+        logo_url: 'ppsc',
+        negative_marking: 0.25,
+        sections: [
+          { id: 'ppsc-exc-p1', name: 'Part I - Taxation & Excise Laws' },
+          { id: 'ppsc-exc-p2', name: 'Part II - General Ability' }
+        ],
+        questions: [
+          ["GST stands for?", ["General Sales Tax", "Goods and Services Tax", "Government Service Tax", "General Service Tax"], 1, "Goods and Services Tax.", 'ppsc-exc-p1'],
+          ["Who collects excise duty in Punjab?", ["FBR", "Excise Department", "Customs", "Revenue Board"], 1, "Punjab Excise Department.", 'ppsc-exc-p1'],
+          ["First Governor General of Pakistan?", ["Quaid-e-Azam", "Khawaja Nazimuddin", "Ghulam Muhammad", "Iskander Mirza"], 0, "Quaid-e-Azam was the first GG.", 'ppsc-exc-p2'],
+          ["Which is the largest canal of Pakistan?", ["Upper Bari Doab", "Lower Bari Doab", "Thal Canal", "Sukkur Barrage"], 0, "Upper Bari Doab is one of the largest.", 'ppsc-exc-p2']
+        ]
+      },
+      {
+        id: 'spsc-assistant-director',
+        title: 'SPSC Assistant Director Test',
+        category: 'SPSC',
+        course: 'Assistant Director (BS-17)',
+        case_no: 'Case No. 09-AD/2026',
+        duration: 6000,
+        passing_score: 45.0,
+        logo_url: 'spsc',
+        negative_marking: 0.25,
+        sections: [
+          { id: 'spsc-ad-p1', name: 'Part I - English & Essay' },
+          { id: 'spsc-ad-p2', name: 'Part II - Sindh Affairs' }
+        ],
+        questions: [
+          ["Karachi is located on which sea?", ["Arabian Sea", "Bay of Bengal", "Indian Ocean", "Persian Gulf"], 0, "Arabian Sea.", 'spsc-ad-p1'],
+          ["Who was the first Chief Minister of Sindh?", ["Muhammad Ayub Khuhro", "Qaim Ali Shah", "Murad Ali Shah", "Abdul Sattar"], 0, "Muhammad Ayub Khuhro.", 'spsc-ad-p2'],
+          ["Mohenjo-daro is in which district?", ["Larkana", "Dadu", "Sukkur", "Khairpur"], 0, "Larkana District.", 'spsc-ad-p2'],
+          ["What is the old name of Karachi?", ["Kalachi", "Kurrachee", "Debal", "Mansura"], 0, "Originally known as Kalachi.", 'spsc-ad-p2']
+        ]
+      },
+      {
+        id: 'spsc-lecturer',
+        title: 'SPSC Lecturer (Education) Test',
+        category: 'SPSC',
+        course: 'Lecturer (BS-17)',
+        case_no: 'Case No. 33-LE/2026',
+        duration: 5400,
+        passing_score: 50.0,
+        logo_url: 'spsc',
+        negative_marking: 0.25,
+        sections: [
+          { id: 'spsc-lec-p1', name: 'Part I - Subject Knowledge' },
+          { id: 'spsc-lec-p2', name: 'Part II - Pedagogy & GK' }
+        ],
+        questions: [
+          ["Who is known as the 'Father of the Nation' in Pakistan?", ["Allama Iqbal", "Quaid-e-Azam", "Fatima Jinnah", "Sir Syed"], 1, "Quaid-e-Azam.", 'spsc-lec-p1'],
+          ["Which is the largest district of Sindh by area?", ["Tharparkar", "Sanghar", "Umerkot", "Badin"], 0, "Tharparkar is the largest.", 'spsc-lec-p2'],
+          ["The Indus River enters Sindh at?", ["Sukkur", "Kashmore", "Sehwan", "Jamshoro"], 1, "Enters at Kashmore.", 'spsc-lec-p2'],
+          ["What does 'Pedagogy' mean?", ["Study of children", "Art of teaching", "School management", "Curriculum design"], 1, "Art and science of teaching.", 'spsc-lec-p2']
+        ]
+      },
+      {
+        id: 'spsc-medical-officer',
+        title: 'SPSC Medical Officer Test',
+        category: 'SPSC',
+        course: 'Medical Officer (BS-17)',
+        case_no: 'Case No. 18-MO/2026',
+        duration: 6000,
+        passing_score: 40.0,
+        logo_url: 'spsc',
+        negative_marking: 0.25,
+        sections: [
+          { id: 'spsc-mo-p1', name: 'Part I - Clinical Medicine' },
+          { id: 'spsc-mo-p2', name: 'Part II - Public Health & GK' }
+        ],
+        questions: [
+          ["Normal human body temperature in Celsius?", ["36.5", "37", "37.5", "36"], 1, "37°C is normal.", 'spsc-mo-p1'],
+          ["Which vitamin is produced in human skin by sunlight?", ["Vitamin A", "Vitamin B", "Vitamin C", "Vitamin D"], 3, "Vitamin D from sunlight.", 'spsc-mo-p1'],
+          ["Capital of Sindh Province?", ["Hyderabad", "Karachi", "Sukkur", "Larkana"], 1, "Karachi is the capital.", 'spsc-mo-p2'],
+          ["Who founded the Sindh Madressatul Islam?", ["Quaid-e-Azam", "Sir Syed Ahmed Khan", "Hassan Ali Effendi", "Allama Iqbal"], 2, "Hassan Ali Effendi founded it.", 'spsc-mo-p2']
+        ]
+      },
+      {
+        id: 'bpsc-assistant-director',
+        title: 'BPSC Assistant Director Test',
+        category: 'BPSC',
+        course: 'Assistant Director (BS-17)',
+        case_no: 'Case No. 15-AD/2026',
+        duration: 5400,
+        passing_score: 40.0,
+        logo_url: 'bpsc',
+        negative_marking: 0.25,
+        sections: [
+          { id: 'bpsc-ad-p1', name: 'Part I - English & Essay' },
+          { id: 'bpsc-ad-p2', name: 'Part II - Balochistan Affairs' }
+        ],
+        questions: [
+          ["Quetta is the capital of?", ["Sindh", "Punjab", "Balochistan", "KPK"], 2, "Quetta is capital of Balochistan.", 'bpsc-ad-p1'],
+          ["Which pass connects Quetta with Afghanistan?", ["Khyber", "Bolan", "Tochi", "Khunjerab"], 1, "Bolan Pass.", 'bpsc-ad-p2'],
+          ["Largest district of Balochistan?", ["Quetta", "Chagai", "Kalat", "Zhob"], 1, "Chagai is one of the largest.", 'bpsc-ad-p2'],
+          ["Who was the first Chief Minister of Balochistan?", ["Attaullah Mengal", "Akbar Bugti", "Jam Ghulam Qadir", "Abdul Quddus"], 0, "Sardar Attaullah Mengal.", 'bpsc-ad-p2']
+        ]
+      },
+      {
+        id: 'bpsc-lecturer',
+        title: 'BPSC Lecturer (BS-17) Test',
+        category: 'BPSC',
+        course: 'Lecturer (BS-17)',
+        case_no: 'Case No. 29-LEC/2026',
+        duration: 6000,
+        passing_score: 45.0,
+        logo_url: 'bpsc',
+        negative_marking: 0.25,
+        sections: [
+          { id: 'bpsc-lec-p1', name: 'Part I - Subject Specialization' },
+          { id: 'bpsc-lec-p2', name: 'Part II - General Knowledge' }
+        ],
+        questions: [
+          ["Who wrote 'The Great Game' related to Central Asia?", ["Peter Hopkirk", "Rudyard Kipling", "Winston Churchill", "George Curzon"], 0, "Peter Hopkirk.", 'bpsc-lec-p1'],
+          ["Ziarat is famous for?", ["Apples", "Juniper forests", "Dates", "Gold mines"], 1, "World's second largest juniper forest.", 'bpsc-lec-p2'],
+          ["Which mineral is Balochistan famous for?", ["Gold", "Natural Gas", "Coal", "All of these"], 3, "Rich in natural gas, coal, copper.", 'bpsc-lec-p2'],
+          ["Gwadar port is located in?", ["Punjab", "Sindh", "Balochistan", "KPK"], 2, "Gwadar, Balochistan.", 'bpsc-lec-p2']
+        ]
+      },
+      {
+        id: 'kppsc-assistant-director',
+        title: 'KPPSC Assistant Director Test',
+        category: 'KPPSC',
+        course: 'Assistant Director (BS-17)',
+        case_no: 'Case No. 11-AD/2026',
+        duration: 5400,
+        passing_score: 40.0,
+        logo_url: 'kppsc',
+        negative_marking: 0.25,
+        sections: [
+          { id: 'kppsc-ad-p1', name: 'Part I - English & Current Affairs' },
+          { id: 'kppsc-ad-p2', name: 'Part II - Khyber Pakhtunkhwa Affairs' }
+        ],
+        questions: [
+          ["Peshawar is the capital of?", ["Punjab", "Sindh", "KPK", "Balochistan"], 2, "Peshawar is capital of KPK.", 'kppsc-ad-p1'],
+          ["Khyber Pass connects Pakistan with?", ["Iran", "Afghanistan", "China", "India"], 1, "Afghanistan.", 'kppsc-ad-p2'],
+          ["Which is the largest city of KPK?", ["Peshawar", "Abbottabad", "Mardan", "Swat"], 0, "Peshawar.", 'kppsc-ad-p2'],
+          ["Who was the first Chief Minister of KPK?", ["Khan Abdul Qayyum Khan", "Sardar Abdur Rab Nishtar", "Muhammad Aslam Khan", "Pervez Khattak"], 0, "Khan Abdul Qayyum Khan.", 'kppsc-ad-p2']
+        ]
+      },
+      {
+        id: 'kppsc-lecturer',
+        title: 'KPPSC Lecturer Test',
+        category: 'KPPSC',
+        course: 'Lecturer (BS-17)',
+        case_no: 'Case No. 55-LEC/2026',
+        duration: 6000,
+        passing_score: 50.0,
+        logo_url: 'kppsc',
+        negative_marking: 0.25,
+        sections: [
+          { id: 'kppsc-lec-p1', name: 'Part I - Subject Knowledge' },
+          { id: 'kppsc-lec-p2', name: 'Part II - General Intelligence' }
+        ],
+        questions: [
+          ["Which is the highest peak in KPK?", ["K2", "Nanga Parbat", "Takht-e-Sulaiman", "Tirich Mir"], 3, "Tirich Mir is in Chitral, KPK.", 'kppsc-lec-p1'],
+          ["Which river flows through Peshawar Valley?", ["Indus", "Kabul River", "Swat River", "Both b & c"], 3, "Kabul and Swat rivers.", 'kppsc-lec-p2'],
+          ["Saif-ul-Muluk lake is in?", ["Naran Valley", "Swat", "Chitral", "Dir"], 0, "Naran Valley, KPK.", 'kppsc-lec-p2'],
+          ["Who founded Islamia College Peshawar?", ["Quaid-e-Azam", "Sir Syed Ahmed Khan", "Sahibzada Abdul Qayyum Khan", "Allama Iqbal"], 2, "Sahibzada Abdul Qayyum.", 'kppsc-lec-p2']
+        ]
+      },
+      {
+        id: 'kppsc-forest-officer',
+        title: 'KPPSC Forest Officer Test',
+        category: 'KPPSC',
+        course: 'Forest Officer (BS-16)',
+        case_no: 'Case No. 07-FO/2026',
+        duration: 5400,
+        passing_score: 40.0,
+        logo_url: 'kppsc',
+        negative_marking: 0.25,
+        sections: [
+          { id: 'kppsc-fo-p1', name: 'Part I - Forestry & Environment' },
+          { id: 'kppsc-fo-p2', name: 'Part II - General Knowledge' }
+        ],
+        questions: [
+          ["Which is the largest forest in KPK?", ["Chitral Forest", "Dir Forest", "Swat Forest", "Hazara Forest"], 0, "Chitral has large forests.", 'kppsc-fo-p1'],
+          ["KPK has how many national parks approx?", ["3", "5", "7", "9"], 1, "Several national parks.", 'kppsc-fo-p1'],
+          ["Which animal is protected in KPK?", ["Markhor", "Snow Leopard", "Both", "None"], 2, "Both Markhor and Snow Leopard.", 'kppsc-fo-p2'],
+          ["Which pass leads to Swat Valley?", ["Lowari Pass", "Malakand Pass", "Shandur Pass", "Khyber Pass"], 1, "Malakand Pass.", 'kppsc-fo-p2']
+        ]
+      },
+      {
+        id: 'ajkpsc-admin-officer',
+        title: 'AJKPSC Administrative Officer Test',
+        category: 'AJKPSC',
+        course: 'Administrative Officer (BS-17)',
+        case_no: 'Case No. AJK-14/2026',
+        duration: 6000,
+        passing_score: 40.0,
+        logo_url: 'default',
+        negative_marking: 0.25,
+        sections: [
+          { id: 'ajk-ad-p1', name: 'Part I - English & Administration' },
+          { id: 'ajk-ad-p2', name: 'Part II - AJK & Pakistan Affairs' }
+        ],
+        questions: [
+          ["Muzaffarabad is the capital of?", ["Gilgit", "AJK", "KPK", "Punjab"], 1, "Muzaffarabad, Azad Jammu & Kashmir.", 'ajk-ad-p1'],
+          ["Which river flows through Muzaffarabad?", ["Jhelum", "Neelum", "Both", "Indus"], 2, "Jhelum and Neelum rivers.", 'ajk-ad-p2'],
+          ["AJK was liberated in which year?", ["1947", "1948", "1950", "1965"], 0, "October 1947.", 'ajk-ad-p2'],
+          ["Who is the constitutional head of AJK?", ["Prime Minister", "President", "Governor", "Chief Secretary"], 1, "The President of AJK.", 'ajk-ad-p2']
+        ]
       }
+      // === TEMPORARY SERVICE COMMISSION EXAMS (15 MORE) - END ===
     ]
 
     for (const exam of examsToSeed) {

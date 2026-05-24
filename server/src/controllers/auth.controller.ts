@@ -4,6 +4,7 @@ import jwt from 'jsonwebtoken'
 import { pool } from '../db/pool.js'
 import { AuthenticatedRequest } from '../middleware/auth.js'
 import dotenv from 'dotenv'
+import { sendPasswordResetOTP } from '../lib/mailer.js'
 
 dotenv.config()
 
@@ -197,5 +198,121 @@ export async function updateProfile(req: Request, res: Response): Promise<void> 
   } catch (err) {
     console.error('Update profile error:', err)
     res.status(500).json({ error: 'Internal server error during profile update.' })
+  }
+}
+
+export async function requestPasswordReset(req: Request, res: Response): Promise<void> {
+  const { email } = req.body
+
+  if (!email) {
+    res.status(400).json({ error: 'Email is required.' })
+    return
+  }
+
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  if (!emailRegex.test(email)) {
+    res.status(400).json({ error: 'Invalid email address format.' })
+    return
+  }
+
+  try {
+    const userRes = await pool.query('SELECT 1 FROM users WHERE email = $1', [email.toLowerCase()])
+    if (userRes.rowCount === 0) {
+      // Don't reveal if user exists (security)
+      res.json({ message: 'If an account exists, an OTP has been sent.' })
+      return
+    }
+
+    // Generate 6-digit OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString()
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000) // 10 minutes
+
+    // Invalidate previous unused OTPs for this email
+    await pool.query(
+      'UPDATE password_resets SET used = TRUE WHERE email = $1 AND used = FALSE',
+      [email.toLowerCase()]
+    )
+
+    await pool.query(
+      'INSERT INTO password_resets (email, otp, expires_at) VALUES ($1, $2, $3)',
+      [email.toLowerCase(), otp, expiresAt]
+    )
+
+    // Send real email with OTP (works for any user's Gmail)
+    try {
+      await sendPasswordResetOTP({ to: email, otp })
+    } catch (mailError) {
+      console.error('Failed to send reset email:', mailError)
+      // Still return success message to prevent email enumeration attacks
+    }
+
+    res.json({ message: 'If an account exists, an OTP has been sent to your email.' })
+  } catch (err) {
+    console.error('Password reset request error:', err)
+    res.status(500).json({ error: 'Internal server error.' })
+  }
+}
+
+export async function resetPasswordWithOtp(req: Request, res: Response): Promise<void> {
+  const { email, otp, newPassword } = req.body
+
+  if (!email || !otp || !newPassword) {
+    res.status(400).json({ error: 'Email, OTP and new password are required.' })
+    return
+  }
+
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  if (!emailRegex.test(email)) {
+    res.status(400).json({ error: 'Invalid email address format.' })
+    return
+  }
+
+  if (newPassword.length < 8) {
+    res.status(400).json({ error: 'Password must be at least 8 characters long.' })
+    return
+  }
+
+  const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/
+  if (!passwordRegex.test(newPassword)) {
+    res.status(400).json({ error: 'Password must contain at least one uppercase letter, one lowercase letter, and one digit.' })
+    return
+  }
+
+  if (!/^\d{6}$/.test(otp)) {
+    res.status(400).json({ error: 'OTP must be a 6-digit number.' })
+    return
+  }
+
+  try {
+    const resetRes = await pool.query(
+      `SELECT * FROM password_resets 
+       WHERE email = $1 AND otp = $2 AND used = FALSE AND expires_at > NOW() 
+       ORDER BY created_at DESC LIMIT 1`,
+      [email.toLowerCase(), otp]
+    )
+
+    if (resetRes.rowCount === 0) {
+      res.status(400).json({ error: 'Invalid or expired OTP.' })
+      return
+    }
+
+    const salt = await bcrypt.genSalt(10)
+    const passwordHash = await bcrypt.hash(newPassword, salt)
+
+    await pool.query(
+      'UPDATE users SET password_hash = $1 WHERE email = $2',
+      [passwordHash, email.toLowerCase()]
+    )
+
+    // Mark OTP as used
+    await pool.query(
+      'UPDATE password_resets SET used = TRUE WHERE id = $1',
+      [resetRes.rows[0].id]
+    )
+
+    res.json({ message: 'Password has been reset successfully. You can now sign in.' })
+  } catch (err) {
+    console.error('Password reset error:', err)
+    res.status(500).json({ error: 'Internal server error during password reset.' })
   }
 }

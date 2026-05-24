@@ -42,9 +42,7 @@ export default function WelcomePage() {
               <span>{t('public.landing.heroBadge')}</span>
             </div>
 
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-tight text-slate-900 dark:text-white font-academic mb-6">
-              {t('public.landing.heroTitle')}
-            </h1>
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-tight text-slate-900 dark:text-white font-academic mb-6" dangerouslySetInnerHTML={{ __html: t('public.landing.heroTitle') }} />
 
             <p className="text-lg md:text-xl text-slate-600 dark:text-slate-400 mb-8 max-w-2xl mx-auto leading-relaxed font-light">
               {t('public.landing.heroDesc')}

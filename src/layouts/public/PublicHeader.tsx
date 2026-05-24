@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { ArrowRight, Menu, X } from 'lucide-react'
 import { Link, useLocation } from 'react-router-dom'
@@ -8,8 +8,14 @@ import { ThemeToggle } from '@/components/shared/ThemeToggle'
 import { useUserStore } from '@/store/userStore'
 export function PublicHeader() {
   const { t } = useTranslation()
-  const { user } = useUserStore()
+  const { user, fetchProfile } = useUserStore()
   const location = useLocation()
+
+  useEffect(() => {
+    if (!user) {
+      fetchProfile()
+    }
+  }, [])
   const [mobileOpen, setMobileOpen] = useState(false)
   const navLinks = [
     { name: t('public.nav.about'), path: '/about' },

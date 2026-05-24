@@ -59,7 +59,7 @@ export async function startExamAttempt(req: Request, res: Response): Promise<voi
     return
   }
 
-  if (remainingTime !== undefined && (typeof remainingTime !== 'number' || remainingTime < 0 || remainingTime > 7200)) {
+  if (remainingTime !== undefined && (typeof remainingTime !== 'number' || remainingTime < 0 || remainingTime > 14400)) {
     res.status(400).json({ error: 'Invalid remainingTime.' })
     return
   }
@@ -137,7 +137,7 @@ export async function saveAttemptAnswer(req: Request, res: Response): Promise<vo
     return
   }
 
-  if (remainingTime !== undefined && (typeof remainingTime !== 'number' || remainingTime < 0 || remainingTime > 7200)) {
+  if (remainingTime !== undefined && (typeof remainingTime !== 'number' || remainingTime < 0 || remainingTime > 14400)) {
     res.status(400).json({ error: 'Invalid remainingTime.' })
     return
   }

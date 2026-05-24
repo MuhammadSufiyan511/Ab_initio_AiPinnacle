@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { NavLink, useLocation } from 'react-router-dom'
+import { NavLink, Link, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   LayoutDashboard, BookOpen, ClipboardList, Brain,
@@ -58,8 +58,13 @@ export function Sidebar({ collapsed, onToggle, placement = 'left' }: SidebarProp
         borderRight: placement === 'left' ? '1px solid var(--border-color)' : undefined,
       }}
     >
-      {/* Logo */}
-      <div className="flex items-center gap-3 px-4 h-16 border-b flex-shrink-0" style={{ borderColor: 'var(--border-color)' }}>
+      {/* Logo / Home */}
+      <Link
+        to="/"
+        onClick={() => { if (typeof window !== 'undefined' && window.innerWidth < 768) onToggle() }}
+        className="flex items-center gap-3 px-4 h-16 border-b flex-shrink-0 hover:opacity-80 transition-opacity"
+        style={{ borderColor: 'var(--border-color)' }}
+      >
         <img 
           src="/logo-nobg.png" 
           alt="PrepPro Academy" 
@@ -78,7 +83,7 @@ export function Sidebar({ collapsed, onToggle, placement = 'left' }: SidebarProp
             </motion.span>
           )}
         </AnimatePresence>
-      </div>
+      </Link>
 
       {/* Nav Items */}
       <nav className="flex-1 py-4 px-2 flex flex-col gap-1 overflow-y-auto">
